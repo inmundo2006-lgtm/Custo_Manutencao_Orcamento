@@ -23,8 +23,28 @@ TAXA_TON  = 2.60
 FIM_SAFRA = date(2026, 11, 30)
 INI_SAFRA = date(2026, 4, 1)
 
-CCS_COLHEITA = ["003", "004", "029", "041", "044", "050", "051"]
+CCS_COLHEITA = ["003", "005", "029", "041", "044", "050", "051"]
 CCS_AGRO     = ["028", "037", "038", "046", "047", "049", "052", "054", "056"]
+
+# Descrições dos CCs (código -> descrição completa)
+DESC_CC = {
+    "003": "003 - VALE DO IVAI",
+    "005": "005 - NOVA PRODUTIVA",
+    "029": "029 - RIO AMAMBAI",
+    "041": "041 - COCAL",
+    "044": "044 - SOL NASCENTE",
+    "050": "050 - LOBO GUARA",
+    "051": "051 - COGO",
+    "028": "028 - AGRO VALE DO IVAI",
+    "037": "037 - AGRO NAVIRAI",
+    "038": "038 - AGRO ASTORGA PLANTIO/CUL",
+    "046": "046 - PREPARO DE SOLO",
+    "047": "047 - PLANTIO DE GRAOS",
+    "049": "049 - AGRO SANTA CANDIDA",
+    "052": "052 - PULVERIZACAO AEREA",
+    "054": "054 - AGRO RORAIMA",
+    "056": "056 - PLANTIO DE GRAOS RORAIMA",
+}
 
 USUARIOS = {
     "colheita": ("col2026",  "colheita"),
@@ -197,12 +217,17 @@ with st.sidebar:
     st.header("🔎 Filtros")
 
     if modulo == "colheita":
-        df_ref = df_t[df_t["Centro_Custo"].isin(CCS_COLHEITA)]
+        cc_opcoes = CCS_COLHEITA
     else:
-        df_ref = df_m[df_m["Centro_Custo"].isin(CCS_AGRO)]
+        cc_opcoes = CCS_AGRO
 
-    cc_opcoes = sorted(df_ref["Centro_Custo"].unique())
-    cc_sel = st.multiselect("Centro de Custo", options=cc_opcoes, default=cc_opcoes)
+    cc_sel_desc = st.multiselect(
+        "Centro de Custo",
+        options=cc_opcoes,
+        default=cc_opcoes,
+        format_func=lambda c: DESC_CC.get(c, c)
+    )
+    cc_sel = cc_sel_desc
 
     periodo = st.date_input(
         "Período",
