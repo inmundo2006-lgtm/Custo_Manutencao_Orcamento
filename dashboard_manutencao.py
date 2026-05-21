@@ -269,6 +269,8 @@ with st.sidebar:
 if modulo == "colheita":
 
     st.title("🌾 Orçamento x Manutenção")
+    label_cc = DESC_CC.get(cc_sel[0], cc_sel[0]) if len(cc_sel) == 1 else "Global"
+    st.caption(f"Relatório de Projeção de Gastos com Manutenção — {label_cc}")
     st.caption("Safra 2026/2027 · Dados atualizados a cada 5 minutos")
 
     df_t_f = df_t[
@@ -402,6 +404,8 @@ if modulo == "colheita":
 elif modulo == "agro":
 
     st.title("🚜 Orçamento x Manutenção — Agropecuárias")
+    label_cc = DESC_CC.get(cc_sel[0], cc_sel[0]) if len(cc_sel) == 1 else "Global"
+    st.caption(f"Relatório de Projeção de Gastos com Manutenção — {label_cc}")
     st.caption("Safra 2026/2027 · Dados atualizados a cada 5 minutos")
 
     frac           = fracao_periodo(d_ini, d_fim)
