@@ -23,7 +23,7 @@ SHEET_META  = "METAS"
 
 TAXA_TON    = 2.60
 FIM_SAFRA   = date(2027, 3, 31)
-INI_SAFRA   = date(2026, 4, 1)
+INI_SAFRA   = date(2026, 3, 1)
 FIM_COLHEITA = date(2026, 11, 30)
 
 CCS_COLHEITA = ["003", "005", "029", "041", "044", "050", "051"]
