@@ -173,31 +173,13 @@ st.markdown("""
         overflow: visible !important;
     }
     @media print {
-        [data-testid="stSidebar"]          { display: none !important; }
-        [data-testid="stToolbar"]          { display: none !important; }
-        [data-testid="stDecoration"]       { display: none !important; }
-        [data-testid="stStatusWidget"]     { display: none !important; }
-        footer                             { display: none !important; }
-        .stDeployButton                    { display: none !important; }
-        iframe                             { display: none !important; }
-        header                             { display: none !important; }
-        section[data-testid="stSidebar"]   { display: none !important; }
-        [data-testid="collapsedControl"]   { display: none !important; }
-        .stMainBlockContainer {
-            padding: 0 !important;
-            max-width: 100% !important;
-        }
-        [data-testid="stMain"] {
-            margin-left: 0 !important;
-        }
-        [data-testid="stAppViewContainer"] {
-            zoom: 48%;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         @page {
-            size: A4 landscape;
-            margin: 5mm;
+            size: A3 landscape;
+            margin: 10mm;
         }
     }
 </style>
