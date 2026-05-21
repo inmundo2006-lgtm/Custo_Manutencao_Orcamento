@@ -151,6 +151,14 @@ st.set_page_config(page_title="Custo Manutenção", layout="wide", page_icon="�
 st.markdown("""
 <style>
     [data-testid="stSidebar"] { background: #0e1e14; }
+    [data-testid="stSidebar"] [data-baseweb="select"] > div:first-child {
+        max-height: none !important;
+        height: auto !important;
+    }
+    [data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] {
+        white-space: normal !important;
+        overflow: visible !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -251,16 +259,8 @@ with st.sidebar:
 # ═══════════════════════════════════════════════
 if modulo == "colheita":
 
-    col_titulo, col_btn = st.columns([4, 1])
-    with col_titulo:
-        st.title("🌾 Orçamento x Manutenção")
-        st.caption("Safra 2026/2027 · Dados atualizados a cada 5 minutos")
-    with col_btn:
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("📄 Exportar PDF", use_container_width=True):
-            st.markdown("""
-            <script>window.print();</script>
-            """, unsafe_allow_html=True)
+    st.title("🌾 Orçamento x Manutenção")
+    st.caption("Safra 2026/2027 · Dados atualizados a cada 5 minutos")
 
     df_t_f = df_t[
         df_t["Centro_Custo"].isin(cc_sel) &
