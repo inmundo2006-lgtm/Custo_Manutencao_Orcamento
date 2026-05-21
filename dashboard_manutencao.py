@@ -268,14 +268,31 @@ with st.sidebar:
 # ═══════════════════════════════════════════════
 if modulo == "colheita":
 
-    st.title("🌾 Orçamento x Manutenção")
-    label_cc = DESC_CC.get(cc_sel[0], cc_sel[0]) if len(cc_sel) == 1 else "Global"
-    st.markdown(f"""
-    <p style='font-size:28px; font-weight:bold; color:#2ecc71; margin:0; padding:0'>
-        Relatório de Projeção de Gastos com Manutenção — {label_cc}
-    </p>
-    """, unsafe_allow_html=True)
-    st.caption("Safra 2026/2027 · Dados atualizados a cada 5 minutos")
+    col_tit, col_periodo = st.columns([3, 1])
+    with col_tit:
+        st.title("🌾 Orçamento x Manutenção")
+        label_cc = DESC_CC.get(cc_sel[0], cc_sel[0]) if len(cc_sel) == 1 else "Global"
+        st.markdown(f"""
+        <p style='font-size:28px; font-weight:bold; color:#2ecc71; margin:0; padding:0'>
+            Relatório de Projeção de Gastos com Manutenção — {label_cc}
+        </p>
+        """, unsafe_allow_html=True)
+        st.caption("Safra 2026/2027 · Dados atualizados a cada 5 minutos")
+    with col_periodo:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style='background:#0e1e14; border:1px solid #2ecc71; border-radius:8px;
+                    padding:12px 16px; text-align:center'>
+            <span style='color:#888; font-size:12px'>📅 Período selecionado</span><br>
+            <span style='color:#2ecc71; font-size:18px; font-weight:bold'>
+                {d_ini.strftime('%d/%m/%Y')}
+            </span>
+            <span style='color:#888'> → </span>
+            <span style='color:#2ecc71; font-size:18px; font-weight:bold'>
+                {d_fim.strftime('%d/%m/%Y')}
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
 
     df_t_f = df_t[
         df_t["Centro_Custo"].isin(cc_sel) &
@@ -407,14 +424,31 @@ if modulo == "colheita":
 # ═══════════════════════════════════════════════
 elif modulo == "agro":
 
-    st.title("🚜 Orçamento x Manutenção — Agropecuárias")
-    label_cc = DESC_CC.get(cc_sel[0], cc_sel[0]) if len(cc_sel) == 1 else "Global"
-    st.markdown(f"""
-    <p style='font-size:28px; font-weight:bold; color:#2ecc71; margin:0; padding:0'>
-        Relatório de Projeção de Gastos com Manutenção — {label_cc}
-    </p>
-    """, unsafe_allow_html=True)
-    st.caption("Safra 2026/2027 · Dados atualizados a cada 5 minutos")
+    col_tit, col_periodo = st.columns([3, 1])
+    with col_tit:
+        st.title("🚜 Orçamento x Manutenção — Agropecuárias")
+        label_cc = DESC_CC.get(cc_sel[0], cc_sel[0]) if len(cc_sel) == 1 else "Global"
+        st.markdown(f"""
+        <p style='font-size:28px; font-weight:bold; color:#2ecc71; margin:0; padding:0'>
+            Relatório de Projeção de Gastos com Manutenção — {label_cc}
+        </p>
+        """, unsafe_allow_html=True)
+        st.caption("Safra 2026/2027 · Dados atualizados a cada 5 minutos")
+    with col_periodo:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style='background:#0e1e14; border:1px solid #3498db; border-radius:8px;
+                    padding:12px 16px; text-align:center'>
+            <span style='color:#888; font-size:12px'>📅 Período selecionado</span><br>
+            <span style='color:#3498db; font-size:18px; font-weight:bold'>
+                {d_ini.strftime('%d/%m/%Y')}
+            </span>
+            <span style='color:#888'> → </span>
+            <span style='color:#3498db; font-size:18px; font-weight:bold'>
+                {d_fim.strftime('%d/%m/%Y')}
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
 
     frac           = fracao_periodo(d_ini, d_fim)
     df_orc_sel     = df_orc[df_orc["Centro_Custo"].isin(cc_sel)].copy()
