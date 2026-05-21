@@ -172,16 +172,27 @@ st.markdown("""
         white-space: normal !important;
         overflow: visible !important;
     }
-    /* Reduzir tamanho dos KPIs */
-    [data-testid="stMetricValue"] { font-size: 1.2rem !important; }
-    [data-testid="stMetricLabel"] { font-size: 0.7rem !important; }
-    [data-testid="stMetricDelta"] { font-size: 0.65rem !important; }
-    /* Reduzir espaçamento entre blocos */
-    .block-container { padding-top: 1rem !important; padding-bottom: 0.5rem !important; }
-    [data-testid="stVerticalBlock"] > div { gap: 0.3rem !important; }
-    h1 { font-size: 1.8rem !important; margin-bottom: 0 !important; }
-    h2, h3 { font-size: 1.1rem !important; margin: 0.2rem 0 !important; }
-    hr { margin: 0.3rem 0 !important; }
+    /* KPIs compactos */
+    [data-testid="stMetricValue"] { font-size: 0.95rem !important; line-height: 1.1 !important; }
+    [data-testid="stMetricLabel"] { font-size: 0.6rem !important; }
+    [data-testid="stMetricDelta"] { font-size: 0.55rem !important; }
+    /* Espaçamentos mínimos */
+    .block-container {
+        padding-top: 0.3rem !important;
+        padding-bottom: 0.3rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        max-width: 100% !important;
+    }
+    [data-testid="stVerticalBlock"] > div { gap: 0.15rem !important; }
+    [data-testid="stHorizontalBlock"] { gap: 0.3rem !important; }
+    h1 { font-size: 1.2rem !important; margin: 0 !important; padding: 0 !important; }
+    h2 { font-size: 0.85rem !important; margin: 0.1rem 0 !important; }
+    h3 { font-size: 0.8rem !important; margin: 0.1rem 0 !important; }
+    p  { font-size: 0.7rem !important; margin: 0 !important; }
+    hr { margin: 0.15rem 0 !important; }
+    /* Remover padding dos cards de métrica */
+    [data-testid="stMetric"] { padding: 0.2rem 0.3rem !important; }
     @media print {
         * {
             -webkit-print-color-adjust: exact !important;
@@ -408,7 +419,7 @@ if modulo == "colheita":
         fig = go.Figure()
         fig.add_trace(go.Bar(name="Orçamento", x=res["Desc"], y=res["Orçamento"], marker_color="#2ecc71", opacity=0.85))
         fig.add_trace(go.Bar(name="Gasto",     x=res["Desc"], y=res["Gasto"],     marker_color="#e74c3c", opacity=0.85))
-        fig.update_layout(barmode="group", height=250,
+        fig.update_layout(barmode="group", height=180,
             plot_bgcolor="#0c1711", paper_bgcolor="#0c1711", font_color="white",
             legend=dict(orientation="h", yanchor="bottom", y=1.02),
             margin=dict(t=20, b=20), xaxis_tickangle=-30)
@@ -430,7 +441,7 @@ if modulo == "colheita":
             x=[str(i) for i in idx], y=gasto_m.reindex(idx).ffill().fillna(0).values,
             name="Gasto Acum.", line=dict(color="#e74c3c", width=2)
         ))
-        fig2.update_layout(height=250,
+        fig2.update_layout(height=180,
             plot_bgcolor="#0c1711", paper_bgcolor="#0c1711", font_color="white",
             legend=dict(orientation="h", yanchor="bottom", y=1.02), margin=dict(t=20, b=20))
         st.plotly_chart(fig2, use_container_width=True)
@@ -558,7 +569,7 @@ elif modulo == "agro":
         fig = go.Figure()
         fig.add_trace(go.Bar(name="Orçamento Período", x=res["Desc"], y=res["Orçamento"], marker_color="#3498db", opacity=0.85))
         fig.add_trace(go.Bar(name="Gasto",             x=res["Desc"], y=res["Gasto"],     marker_color="#e74c3c", opacity=0.85))
-        fig.update_layout(barmode="group", height=250,
+        fig.update_layout(barmode="group", height=180,
             plot_bgcolor="#0c1711", paper_bgcolor="#0c1711", font_color="white",
             legend=dict(orientation="h", yanchor="bottom", y=1.02),
             margin=dict(t=20, b=20), xaxis_tickangle=-30)
@@ -578,7 +589,7 @@ elif modulo == "agro":
                        annotation_text="Orçamento Período", annotation_position="top left")
         fig2.add_hline(y=orc_safra, line_dash="dot", line_color="#f39c12",
                        annotation_text="Orçamento Safra Total", annotation_position="top left")
-        fig2.update_layout(height=250,
+        fig2.update_layout(height=180,
             plot_bgcolor="#0c1711", paper_bgcolor="#0c1711", font_color="white",
             legend=dict(orientation="h", yanchor="bottom", y=1.02), margin=dict(t=20, b=20))
         st.plotly_chart(fig2, use_container_width=True)
