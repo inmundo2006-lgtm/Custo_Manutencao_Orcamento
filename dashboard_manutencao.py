@@ -18,15 +18,16 @@ ITEM_ID     = "01SHXZOAWVYXPFRVNXY5FJV5UQJCVGCC6I"
 SHEET_MANUT = "fManutencao"
 SHEET_TON   = "COLHEDORAS"
 SHEET_ORC   = "fOrcamento"
+SHEET_META  = "METAS"
 
-TAXA_TON  = 2.60
-FIM_SAFRA = date(2026, 11, 30)
-INI_SAFRA = date(2026, 4, 1)
+TAXA_TON    = 2.60
+FIM_SAFRA   = date(2027, 3, 31)
+INI_SAFRA   = date(2026, 4, 1)
+FIM_COLHEITA = date(2026, 11, 30)
 
 CCS_COLHEITA = ["003", "005", "029", "041", "044", "050", "051"]
 CCS_AGRO     = ["028", "037", "038", "046", "047", "049", "052", "054", "056"]
 
-# Descrições dos CCs (código -> descrição completa)
 DESC_CC = {
     "003": "003 - VALE DO IVAI",
     "005": "005 - NOVA PRODUTIVA",
@@ -70,9 +71,7 @@ def semaforo(pct):
     return "🔴"
 
 def fracao_periodo(d_ini, d_fim):
-    safra_ini  = date(2026, 4, 1)
-    safra_fim  = date(2027, 3, 31)
-    total_dias = (safra_fim - safra_ini).days
+    total_dias = (FIM_SAFRA - INI_SAFRA).days
     dias_sel   = (d_fim - d_ini).days
     return min(dias_sel / total_dias, 1.0) if total_dias > 0 else 0
 
@@ -104,7 +103,9 @@ def carregar_dados():
     df_ton = pd.read_excel(excel_bytes, sheet_name=SHEET_TON)
     excel_bytes.seek(0)
     df_orc = pd.read_excel(excel_bytes, sheet_name=SHEET_ORC)
-    return df_manut, df_ton, df_orc
+    excel_bytes.seek(0)
+    df_meta = pd.read_excel(excel_bytes, sheet_name=SHEET_META)
+    return df_manut, df_ton, df_orc, df_meta
 
 # ─────────────────────────────────────────────
 #  PRÉ-PROCESSAMENTO
@@ -142,6 +143,17 @@ def preparar_orcamento_agro(df_raw):
         errors="coerce"
     ).fillna(0)
     return df
+
+def preparar_metas(df_raw):
+    df = df_raw.copy()
+    df.columns = df.columns.str.strip()
+    # Extrair código CC da coluna "CENTRO DE CUSTO" (ex: "003 -VALE DO IVAI" → "003")
+    df["CC"] = df["CENTRO DE CUSTO"].astype(str).str.extract(r"(\d+)").astype(str).apply(
+        lambda x: x.str.zfill(3)
+    )
+    df["Meta_Ton"] = pd.to_numeric(df["META SAFRA"], errors="coerce").fillna(0)
+    df["Meta_Orc"] = df["Meta_Ton"] * TAXA_TON
+    return df[["CC", "Meta_Ton", "Meta_Orc"]]
 
 # ─────────────────────────────────────────────
 #  PÁGINA CONFIG
@@ -206,10 +218,11 @@ if not st.session_state.logado:
 # ─────────────────────────────────────────────
 with st.spinner("Carregando dados do SharePoint..."):
     try:
-        df_manut_raw, df_ton_raw, df_orc_raw = carregar_dados()
-        df_m   = preparar_manutencao(df_manut_raw)
-        df_t   = preparar_colhedoras(df_ton_raw)
-        df_orc = preparar_orcamento_agro(df_orc_raw)
+        df_manut_raw, df_ton_raw, df_orc_raw, df_meta_raw = carregar_dados()
+        df_m    = preparar_manutencao(df_manut_raw)
+        df_t    = preparar_colhedoras(df_ton_raw)
+        df_orc  = preparar_orcamento_agro(df_orc_raw)
+        df_meta = preparar_metas(df_meta_raw)
     except Exception as e:
         st.error(f"Erro ao processar dados: {e}")
         st.stop()
@@ -224,18 +237,14 @@ with st.sidebar:
     st.divider()
     st.header("🔎 Filtros")
 
-    if modulo == "colheita":
-        cc_opcoes = CCS_COLHEITA
-    else:
-        cc_opcoes = CCS_AGRO
+    cc_opcoes = CCS_COLHEITA if modulo == "colheita" else CCS_AGRO
 
-    cc_sel_desc = st.multiselect(
+    cc_sel = st.multiselect(
         "Centro de Custo",
         options=cc_opcoes,
         default=cc_opcoes,
         format_func=lambda c: DESC_CC.get(c, c)
     )
-    cc_sel = cc_sel_desc
 
     periodo = st.date_input(
         "Período",
@@ -273,21 +282,31 @@ if modulo == "colheita":
         (df_m["Data"].dt.date >= d_ini) &
         (df_m["Data"].dt.date <= d_fim)
     ]
+    df_meta_sel = df_meta[df_meta["CC"].isin(cc_sel)]
 
+    # Cálculos realizado
     dias_colhidos  = max((d_fim - d_ini).days, 1)
-    dias_restantes = max((FIM_SAFRA - d_fim).days, 0)
+    dias_restantes = max((FIM_COLHEITA - d_fim).days, 0)
     ton_atual      = df_t_f["Toneladas"].sum()
     orc_atual      = df_t_f["Orcamento"].sum()
     gasto_atual    = df_m_f["Valor"].sum()
     saldo_atual    = orc_atual - gasto_atual
     pct_uso        = (gasto_atual / orc_atual * 100) if orc_atual > 0 else 0
-    taxa_ton       = ton_atual / dias_colhidos
-    ton_proj       = ton_atual + taxa_ton * dias_restantes
-    orc_proj       = ton_proj * TAXA_TON
-    gasto_proj     = gasto_atual + (gasto_atual / dias_colhidos) * dias_restantes
-    saldo_proj     = orc_proj - gasto_proj
 
-    # KPIs realizado
+    # Cálculos projeção
+    taxa_ton   = ton_atual / dias_colhidos
+    ton_proj   = ton_atual + taxa_ton * dias_restantes
+    orc_proj   = ton_proj * TAXA_TON
+    gasto_proj = gasto_atual + (gasto_atual / dias_colhidos) * dias_restantes
+    saldo_proj = orc_proj - gasto_proj
+
+    # Cálculos meta
+    meta_ton      = df_meta_sel["Meta_Ton"].sum()
+    meta_orc      = df_meta_sel["Meta_Orc"].sum()
+    saldo_meta    = meta_orc - gasto_proj
+    pct_meta      = (gasto_proj / meta_orc * 100) if meta_orc > 0 else 0
+
+    # ── KPIs Realizado
     st.subheader("📊 Realizado até hoje")
     k1, k2, k3, k4 = st.columns(4)
     k1.metric("🌾 Toneladas Colhidas", f"{ton_atual:,.0f} t".replace(",", "."))
@@ -297,7 +316,7 @@ if modulo == "colheita":
               delta=f"{pct_uso:.1f}% utilizado", delta_color="inverse")
     st.divider()
 
-    # KPIs projeção
+    # ── KPIs Projeção
     st.subheader("🔮 Projeção da Safra")
     p1, p2, p3, p4 = st.columns(4)
     p1.metric("🌾 Ton. Projetadas",     f"{ton_proj:,.0f} t".replace(",", "."))
@@ -306,7 +325,17 @@ if modulo == "colheita":
     p4.metric("📈 Saldo Projetado",     fmt_brl(saldo_proj), delta_color="inverse")
     st.divider()
 
-    # Gráficos
+    # ── KPIs Meta
+    st.subheader("🎯 Meta da Safra")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("🌾 Meta Toneladas",   f"{meta_ton:,.0f} t".replace(",", "."))
+    m2.metric("💰 Meta Orçamento",   fmt_brl(meta_orc))
+    m3.metric("🔧 Gasto Projetado",  fmt_brl(gasto_proj))
+    m4.metric("📊 Saldo vs Meta",    fmt_brl(saldo_meta),
+              delta=f"{pct_meta:.1f}% da meta", delta_color="inverse")
+    st.divider()
+
+    # ── Gráficos
     col_esq, col_dir = st.columns(2)
 
     with col_esq:
@@ -318,13 +347,15 @@ if modulo == "colheita":
         ).fillna(0)
         res.columns = ["CC", "Orçamento", "Gasto"]
         res["Saldo"] = res["Orçamento"] - res["Gasto"]
+        res["Desc"]  = res["CC"].map(DESC_CC)
 
         fig = go.Figure()
-        fig.add_trace(go.Bar(name="Orçamento", x=res["CC"], y=res["Orçamento"], marker_color="#2ecc71", opacity=0.85))
-        fig.add_trace(go.Bar(name="Gasto",     x=res["CC"], y=res["Gasto"],     marker_color="#e74c3c", opacity=0.85))
+        fig.add_trace(go.Bar(name="Orçamento", x=res["Desc"], y=res["Orçamento"], marker_color="#2ecc71", opacity=0.85))
+        fig.add_trace(go.Bar(name="Gasto",     x=res["Desc"], y=res["Gasto"],     marker_color="#e74c3c", opacity=0.85))
         fig.update_layout(barmode="group", height=350,
             plot_bgcolor="#0c1711", paper_bgcolor="#0c1711", font_color="white",
-            legend=dict(orientation="h", yanchor="bottom", y=1.02), margin=dict(t=20, b=20))
+            legend=dict(orientation="h", yanchor="bottom", y=1.02),
+            margin=dict(t=20, b=20), xaxis_tickangle=-30)
         st.plotly_chart(fig, use_container_width=True)
 
     with col_dir:
@@ -348,14 +379,22 @@ if modulo == "colheita":
             legend=dict(orientation="h", yanchor="bottom", y=1.02), margin=dict(t=20, b=20))
         st.plotly_chart(fig2, use_container_width=True)
 
-    # Tabela
+    # ── Tabela
     st.subheader("📋 Detalhe por Centro de Custo")
-    res["% Uso"]        = res.apply(lambda r: f"{semaforo(r['Gasto']/r['Orçamento']*100 if r['Orçamento']>0 else 0)} {r['Gasto']/r['Orçamento']*100 if r['Orçamento']>0 else 0:.1f}%", axis=1)
-    res["Orçamento R$"] = res["Orçamento"].apply(fmt_brl)
-    res["Gasto R$"]     = res["Gasto"].apply(fmt_brl)
-    res["Saldo R$"]     = res["Saldo"].apply(fmt_brl)
-    st.dataframe(res[["CC", "Orçamento R$", "Gasto R$", "Saldo R$", "% Uso"]],
-                 use_container_width=True, hide_index=True)
+    res["Desc"] = res["CC"].map(DESC_CC)
+    res_meta = res.merge(df_meta_sel.rename(columns={"CC": "CC"}), on="CC", how="left").fillna(0)
+    res_meta["Meta Orc R$"]  = res_meta["Meta_Orc"].apply(fmt_brl)
+    res_meta["Orçamento R$"] = res_meta["Orçamento"].apply(fmt_brl)
+    res_meta["Gasto R$"]     = res_meta["Gasto"].apply(fmt_brl)
+    res_meta["Saldo R$"]     = res_meta["Saldo"].apply(fmt_brl)
+    res_meta["% Uso"] = res_meta.apply(
+        lambda r: f"{semaforo(r['Gasto']/r['Orçamento']*100 if r['Orçamento']>0 else 0)} {r['Gasto']/r['Orçamento']*100 if r['Orçamento']>0 else 0:.1f}%", axis=1)
+
+    st.dataframe(
+        res_meta[["Desc", "Meta Orc R$", "Orçamento R$", "Gasto R$", "Saldo R$", "% Uso"]].rename(
+            columns={"Desc": "Centro de Custo"}),
+        use_container_width=True, hide_index=True
+    )
 
 # ═══════════════════════════════════════════════
 #  MÓDULO AGRO
@@ -376,31 +415,41 @@ elif modulo == "agro":
         (df_m["Data"].dt.date <= d_fim)
     ]
 
+    # Cálculos realizado
     orc_periodo = df_orc_sel["Orcamento_Periodo"].sum()
     orc_safra   = df_orc_sel["Orcamento_Total"].sum()
     gasto_atual = df_m_f["Valor"].sum()
     saldo_atual = orc_periodo - gasto_atual
     pct_uso     = (gasto_atual / orc_periodo * 100) if orc_periodo > 0 else 0
 
-    # KPIs período
+    # Cálculos projeção
+    dias_periodo   = max((d_fim - d_ini).days, 1)
+    dias_restantes = max((FIM_SAFRA - d_fim).days, 0)
+    gasto_proj     = gasto_atual + (gasto_atual / dias_periodo) * dias_restantes
+    saldo_proj     = orc_safra - gasto_proj
+    pct_proj       = (gasto_proj / orc_safra * 100) if orc_safra > 0 else 0
+
+    # ── KPIs Realizado
     st.subheader("📊 Realizado no período")
     k1, k2, k3, k4 = st.columns(4)
     k1.metric("📅 Fração da Safra",   f"{frac*100:.1f}%")
     k2.metric("💰 Orçamento Período", fmt_brl(orc_periodo))
     k3.metric("🔧 Gasto Manutenção",  fmt_brl(gasto_atual))
-    k4.metric("📈 Saldo",             fmt_brl(saldo_atual),
+    k4.metric("📈 Saldo Período",     fmt_brl(saldo_atual),
               delta=f"{pct_uso:.1f}% utilizado", delta_color="inverse")
     st.divider()
 
-    # KPIs safra total
-    st.subheader("📋 Orçamento Total da Safra")
-    s1, s2, s3 = st.columns(3)
-    s1.metric("💰 Orçamento Safra Inteira", fmt_brl(orc_safra))
-    s2.metric("🔧 Gasto Acumulado",         fmt_brl(gasto_atual))
-    s3.metric("📈 Saldo da Safra",          fmt_brl(orc_safra - gasto_atual))
+    # ── KPIs Projeção
+    st.subheader("🔮 Projeção da Safra")
+    p1, p2, p3, p4 = st.columns(4)
+    p1.metric("💰 Orçamento Safra",   fmt_brl(orc_safra))
+    p2.metric("🔧 Gasto Projetado",   fmt_brl(gasto_proj))
+    p3.metric("📈 Saldo Projetado",   fmt_brl(saldo_proj),
+              delta=f"{pct_proj:.1f}% da safra", delta_color="inverse")
+    p4.metric("📅 Dias Restantes",    f"{dias_restantes} dias")
     st.divider()
 
-    # Gráficos
+    # ── Gráficos
     col_esq, col_dir = st.columns(2)
 
     with col_esq:
@@ -413,13 +462,15 @@ elif modulo == "agro":
             on="CC", how="left"
         ).fillna(0)
         res["Saldo"] = res["Orçamento"] - res["Gasto"]
+        res["Desc"]  = res["CC"].map(DESC_CC)
 
         fig = go.Figure()
-        fig.add_trace(go.Bar(name="Orçamento Período", x=res["CC"], y=res["Orçamento"], marker_color="#3498db", opacity=0.85))
-        fig.add_trace(go.Bar(name="Gasto",             x=res["CC"], y=res["Gasto"],     marker_color="#e74c3c", opacity=0.85))
+        fig.add_trace(go.Bar(name="Orçamento Período", x=res["Desc"], y=res["Orçamento"], marker_color="#3498db", opacity=0.85))
+        fig.add_trace(go.Bar(name="Gasto",             x=res["Desc"], y=res["Gasto"],     marker_color="#e74c3c", opacity=0.85))
         fig.update_layout(barmode="group", height=350,
             plot_bgcolor="#0c1711", paper_bgcolor="#0c1711", font_color="white",
-            legend=dict(orientation="h", yanchor="bottom", y=1.02), margin=dict(t=20, b=20))
+            legend=dict(orientation="h", yanchor="bottom", y=1.02),
+            margin=dict(t=20, b=20), xaxis_tickangle=-30)
         st.plotly_chart(fig, use_container_width=True)
 
     with col_dir:
@@ -434,24 +485,29 @@ elif modulo == "agro":
         ))
         fig2.add_hline(y=orc_periodo, line_dash="dash", line_color="#3498db",
                        annotation_text="Orçamento Período", annotation_position="top left")
+        fig2.add_hline(y=orc_safra, line_dash="dot", line_color="#f39c12",
+                       annotation_text="Orçamento Safra Total", annotation_position="top left")
         fig2.update_layout(height=350,
             plot_bgcolor="#0c1711", paper_bgcolor="#0c1711", font_color="white",
             legend=dict(orientation="h", yanchor="bottom", y=1.02), margin=dict(t=20, b=20))
         st.plotly_chart(fig2, use_container_width=True)
 
-    # Tabela
+    # ── Tabela
     st.subheader("📋 Detalhe por Centro de Custo")
     res2 = res.merge(
         df_orc_sel[["Centro_Custo", "Orcamento_Total", "Descricao"]].rename(
             columns={"Centro_Custo": "CC"}),
         on="CC", how="left"
     )
-    res2["% Uso"]             = res2.apply(lambda r: f"{semaforo(r['Gasto']/r['Orçamento']*100 if r['Orçamento']>0 else 0)} {r['Gasto']/r['Orçamento']*100 if r['Orçamento']>0 else 0:.1f}%", axis=1)
+    res2["% Uso"] = res2.apply(
+        lambda r: f"{semaforo(r['Gasto']/r['Orçamento']*100 if r['Orçamento']>0 else 0)} {r['Gasto']/r['Orçamento']*100 if r['Orçamento']>0 else 0:.1f}%", axis=1)
     res2["Orçamento Safra"]   = res2["Orcamento_Total"].apply(fmt_brl)
     res2["Orçamento Período"] = res2["Orçamento"].apply(fmt_brl)
     res2["Gasto R$"]          = res2["Gasto"].apply(fmt_brl)
     res2["Saldo R$"]          = res2["Saldo"].apply(fmt_brl)
+
     st.dataframe(
-        res2[["CC", "Descricao", "Orçamento Safra", "Orçamento Período", "Gasto R$", "Saldo R$", "% Uso"]],
+        res2[["Descricao", "Orçamento Safra", "Orçamento Período", "Gasto R$", "Saldo R$", "% Uso"]].rename(
+            columns={"Descricao": "Centro de Custo"}),
         use_container_width=True, hide_index=True
     )
