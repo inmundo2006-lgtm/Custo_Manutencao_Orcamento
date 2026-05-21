@@ -270,7 +270,11 @@ if modulo == "colheita":
 
     st.title("🌾 Orçamento x Manutenção")
     label_cc = DESC_CC.get(cc_sel[0], cc_sel[0]) if len(cc_sel) == 1 else "Global"
-    st.caption(f"Relatório de Projeção de Gastos com Manutenção — {label_cc}")
+    st.markdown(f"""
+    <p style='font-size:28px; font-weight:bold; color:#2ecc71; margin:0; padding:0'>
+        Relatório de Projeção de Gastos com Manutenção — {label_cc}
+    </p>
+    """, unsafe_allow_html=True)
     st.caption("Safra 2026/2027 · Dados atualizados a cada 5 minutos")
 
     df_t_f = df_t[
@@ -405,7 +409,11 @@ elif modulo == "agro":
 
     st.title("🚜 Orçamento x Manutenção — Agropecuárias")
     label_cc = DESC_CC.get(cc_sel[0], cc_sel[0]) if len(cc_sel) == 1 else "Global"
-    st.caption(f"Relatório de Projeção de Gastos com Manutenção — {label_cc}")
+    st.markdown(f"""
+    <p style='font-size:28px; font-weight:bold; color:#2ecc71; margin:0; padding:0'>
+        Relatório de Projeção de Gastos com Manutenção — {label_cc}
+    </p>
+    """, unsafe_allow_html=True)
     st.caption("Safra 2026/2027 · Dados atualizados a cada 5 minutos")
 
     frac           = fracao_periodo(d_ini, d_fim)
