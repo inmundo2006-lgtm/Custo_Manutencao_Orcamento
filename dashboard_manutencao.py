@@ -5,6 +5,7 @@ import requests
 import io
 from datetime import date
 import msal
+import streamlit.components.v1 as components
 
 # ─────────────────────────────────────────────
 #  CREDENCIAIS
@@ -293,6 +294,18 @@ if modulo == "colheita":
             </span>
         </div>
         """, unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        components.html("""
+            <script>
+            function printPage() { window.parent.print(); }
+            </script>
+            <button onclick="printPage()" style="
+                width:100%; padding:10px; background:#2ecc71; color:#0c1711;
+                border:none; border-radius:6px; cursor:pointer;
+                font-weight:bold; font-size:14px;">
+                🖨️ Salvar como PDF
+            </button>
+        """, height=50)
 
     df_t_f = df_t[
         df_t["Centro_Custo"].isin(cc_sel) &
@@ -449,6 +462,18 @@ elif modulo == "agro":
             </span>
         </div>
         """, unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        components.html("""
+            <script>
+            function printPage() { window.parent.print(); }
+            </script>
+            <button onclick="printPage()" style="
+                width:100%; padding:10px; background:#3498db; color:#fff;
+                border:none; border-radius:6px; cursor:pointer;
+                font-weight:bold; font-size:14px;">
+                🖨️ Salvar como PDF
+            </button>
+        """, height=50)
 
     frac           = fracao_periodo(d_ini, d_fim)
     df_orc_sel     = df_orc[df_orc["Centro_Custo"].isin(cc_sel)].copy()
