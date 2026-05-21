@@ -1,0 +1,41 @@
+# ── Segredos — NUNCA subir para o GitHub
+.streamlit/secrets.toml
+.env
+*.env
+
+# ── Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Ambientes virtuais
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# ── IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ── Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Dados locais / temporários
+*.xlsx
+*.csv
+*.log
+/data/
+/temp/
+/tmp/
