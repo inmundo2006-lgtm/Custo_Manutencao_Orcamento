@@ -251,8 +251,16 @@ with st.sidebar:
 # ═══════════════════════════════════════════════
 if modulo == "colheita":
 
-    st.title("🌾 Orçamento x Manutenção")
-    st.caption("Safra 2026/2027 · Dados atualizados a cada 5 minutos")
+    col_titulo, col_btn = st.columns([4, 1])
+    with col_titulo:
+        st.title("🌾 Orçamento x Manutenção")
+        st.caption("Safra 2026/2027 · Dados atualizados a cada 5 minutos")
+    with col_btn:
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("📄 Exportar PDF", use_container_width=True):
+            st.markdown("""
+            <script>window.print();</script>
+            """, unsafe_allow_html=True)
 
     df_t_f = df_t[
         df_t["Centro_Custo"].isin(cc_sel) &
