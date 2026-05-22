@@ -77,6 +77,63 @@ def fracao_periodo(d_ini, d_fim):
     return min(dias_sel / total_dias, 1.0) if total_dias > 0 else 0
 
 # ─────────────────────────────────────────────
+#  VELOCÍMETRO
+# ─────────────────────────────────────────────
+def gauge_chart(valor, titulo):
+    if valor <= 3:
+        cor = "#2ecc71"
+        status = "NORMAL"
+    elif valor <= 5:
+        cor = "#f1c40f"
+        status = "ATENÇÃO"
+    else:
+        cor = "#e74c3c"
+        status = "CRÍTICO"
+
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=valor,
+        number={
+            "suffix": "",
+            "font": {"size": 28, "color": cor, "family": "Arial"},
+            "valueformat": ".2f"
+        },
+        title={
+            "text": f"{titulo}<br><span style='font-size:11px;color:#888'>R$ / tonelada</span><br><span style='font-size:11px;color:{cor}'>{status}</span>",
+            "font": {"size": 13, "color": "#ccc"}
+        },
+        gauge={
+            "axis": {
+                "range": [0, 8],
+                "tickwidth": 1,
+                "tickcolor": "#555",
+                "tickvals": [0, 2, 4, 6, 8],
+                "tickfont": {"color": "#666", "size": 9}
+            },
+            "bar": {"color": "#aaa", "thickness": 0.25},
+            "bgcolor": "#0c1711",
+            "borderwidth": 0,
+            "steps": [
+                {"range": [0, 3], "color": "#27ae60"},
+                {"range": [3, 5], "color": "#f39c12"},
+                {"range": [5, 8], "color": "#c0392b"},
+            ],
+            "threshold": {
+                "line": {"color": cor, "width": 3},
+                "thickness": 0.75,
+                "value": valor
+            }
+        }
+    ))
+    fig.update_layout(
+        height=220,
+        margin=dict(t=60, b=10, l=20, r=20),
+        paper_bgcolor="#0c1711",
+        font={"color": "#ccc"}
+    )
+    return fig
+
+# ─────────────────────────────────────────────
 #  DOWNLOAD SHAREPOINT
 # ─────────────────────────────────────────────
 @st.cache_data(ttl=300)
@@ -359,34 +416,48 @@ if modulo == "colheita":
     saldo_meta    = meta_orc - gasto_proj
     pct_meta      = (gasto_proj / meta_orc * 100) if meta_orc > 0 else 0
 
-    # ── KPIs Realizado
-    st.subheader("📊 Realizado até hoje")
-    k1, k2, k3, k4 = st.columns(4)
-    k1.metric("🌾 Toneladas Colhidas", f"{ton_atual:,.0f} t".replace(",", "."))
-    k2.metric("💰 Orçamento Gerado",   fmt_brl(orc_atual))
-    k3.metric("🔧 Gasto Manutenção",   fmt_brl(gasto_atual))
-    k4.metric("📈 Saldo",              fmt_brl(saldo_atual),
-              delta=f"{pct_uso:.1f}% utilizado", delta_color="inverse")
-    st.divider()
+    # ── Velocímetros + KPIs
+    custo_realizado  = (gasto_atual / ton_atual)  if ton_atual  > 0 else 0
+    custo_projetado  = (gasto_proj  / ton_proj)   if ton_proj   > 0 else 0
+    custo_meta       = (gasto_proj  / meta_ton)   if meta_ton   > 0 else 0
 
-    # ── KPIs Projeção
-    st.subheader("🔮 Projeção da Safra")
-    p1, p2, p3, p4 = st.columns(4)
-    p1.metric("🌾 Ton. Projetadas",     f"{ton_proj:,.0f} t".replace(",", "."))
-    p2.metric("💰 Orçamento Projetado", fmt_brl(orc_proj))
-    p3.metric("🔧 Gasto Projetado",     fmt_brl(gasto_proj))
-    p4.metric("📈 Saldo Projetado",     fmt_brl(saldo_proj), delta_color="inverse")
-    st.divider()
+    col_kpis, col_gauge = st.columns([3, 1])
 
-    # ── KPIs Meta
-    st.subheader("🎯 Meta da Safra")
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("🌾 Meta Toneladas",   f"{meta_ton:,.0f} t".replace(",", "."))
-    m2.metric("💰 Meta Orçamento",   fmt_brl(meta_orc))
-    m3.metric("🔧 Gasto Projetado",  fmt_brl(gasto_proj))
-    m4.metric("📊 Saldo vs Meta",    fmt_brl(saldo_meta),
-              delta=f"{pct_meta:.1f}% da meta", delta_color="inverse")
-    st.divider()
+    with col_kpis:
+        # KPIs Realizado
+        st.subheader("📊 Realizado até hoje")
+        k1, k2, k3, k4 = st.columns(4)
+        k1.metric("🌾 Toneladas Colhidas", f"{ton_atual:,.0f} t".replace(",", "."))
+        k2.metric("💰 Orçamento Gerado",   fmt_brl(orc_atual))
+        k3.metric("🔧 Gasto Manutenção",   fmt_brl(gasto_atual))
+        k4.metric("📈 Saldo",              fmt_brl(saldo_atual),
+                  delta=f"{pct_uso:.1f}% utilizado", delta_color="inverse")
+        st.divider()
+
+        # KPIs Projeção
+        st.subheader("🔮 Projeção da Safra")
+        p1, p2, p3, p4 = st.columns(4)
+        p1.metric("🌾 Ton. Projetadas",     f"{ton_proj:,.0f} t".replace(",", "."))
+        p2.metric("💰 Orçamento Projetado", fmt_brl(orc_proj))
+        p3.metric("🔧 Gasto Projetado",     fmt_brl(gasto_proj))
+        p4.metric("📈 Saldo Projetado",     fmt_brl(saldo_proj), delta_color="inverse")
+        st.divider()
+
+        # KPIs Meta
+        st.subheader("🎯 Meta da Safra")
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("🌾 Meta Toneladas",   f"{meta_ton:,.0f} t".replace(",", "."))
+        m2.metric("💰 Meta Orçamento",   fmt_brl(meta_orc))
+        m3.metric("🔧 Gasto Projetado",  fmt_brl(gasto_proj))
+        m4.metric("📊 Saldo vs Meta",    fmt_brl(saldo_meta),
+                  delta=f"{pct_meta:.1f}% da meta", delta_color="inverse")
+        st.divider()
+
+    with col_gauge:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.plotly_chart(gauge_chart(custo_realizado, "REALIZADO"), use_container_width=True)
+        st.plotly_chart(gauge_chart(custo_projetado, "PROJEÇÃO"),  use_container_width=True)
+        st.plotly_chart(gauge_chart(custo_meta,      "META"),      use_container_width=True)
 
     # ── Gráficos
     col_esq, col_dir = st.columns(2)
