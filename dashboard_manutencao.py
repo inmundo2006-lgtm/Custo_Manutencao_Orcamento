@@ -126,8 +126,8 @@ def gauge_chart(valor, titulo):
         }
     ))
     fig.update_layout(
-        height=220,
-        margin=dict(t=60, b=10, l=20, r=20),
+        height=160,
+        margin=dict(t=40, b=0, l=10, r=10),
         paper_bgcolor="#0c1711",
         font={"color": "#ccc"}
     )
@@ -416,48 +416,48 @@ if modulo == "colheita":
     saldo_meta    = meta_orc - gasto_proj
     pct_meta      = (gasto_proj / meta_orc * 100) if meta_orc > 0 else 0
 
-    # ── Velocímetros + KPIs
-    custo_realizado  = (gasto_atual / ton_atual)  if ton_atual  > 0 else 0
-    custo_projetado  = (gasto_proj  / ton_proj)   if ton_proj   > 0 else 0
-    custo_meta       = (gasto_proj  / meta_ton)   if meta_ton   > 0 else 0
+    # ── Velocímetros + KPIs (gauge como 5ª coluna)
+    custo_realizado = (gasto_atual / ton_atual) if ton_atual > 0 else 0
+    custo_projetado = (gasto_proj  / ton_proj)  if ton_proj  > 0 else 0
+    custo_meta      = (gasto_proj  / meta_ton)  if meta_ton  > 0 else 0
 
-    col_kpis, col_gauge = st.columns([3, 1])
+    # ── Realizado
+    st.subheader("📊 Realizado até hoje")
+    k1, k2, k3, k4, k5 = st.columns([1,1,1,1,1])
+    k1.metric("🌾 Toneladas Colhidas", f"{ton_atual:,.0f} t".replace(",", "."))
+    k2.metric("💰 Orçamento Gerado",   fmt_brl(orc_atual))
+    k3.metric("🔧 Gasto Manutenção",   fmt_brl(gasto_atual))
+    k4.metric("📈 Saldo",              fmt_brl(saldo_atual),
+              delta=f"{pct_uso:.1f}% utilizado", delta_color="inverse")
+    with k5:
+        st.plotly_chart(gauge_chart(custo_realizado, "R$/t REALIZADO"),
+                        use_container_width=True)
+    st.divider()
 
-    with col_kpis:
-        # KPIs Realizado
-        st.subheader("📊 Realizado até hoje")
-        k1, k2, k3, k4 = st.columns(4)
-        k1.metric("🌾 Toneladas Colhidas", f"{ton_atual:,.0f} t".replace(",", "."))
-        k2.metric("💰 Orçamento Gerado",   fmt_brl(orc_atual))
-        k3.metric("🔧 Gasto Manutenção",   fmt_brl(gasto_atual))
-        k4.metric("📈 Saldo",              fmt_brl(saldo_atual),
-                  delta=f"{pct_uso:.1f}% utilizado", delta_color="inverse")
-        st.divider()
+    # ── Projeção
+    st.subheader("🔮 Projeção da Safra")
+    p1, p2, p3, p4, p5 = st.columns([1,1,1,1,1])
+    p1.metric("🌾 Ton. Projetadas",     f"{ton_proj:,.0f} t".replace(",", "."))
+    p2.metric("💰 Orçamento Projetado", fmt_brl(orc_proj))
+    p3.metric("🔧 Gasto Projetado",     fmt_brl(gasto_proj))
+    p4.metric("📈 Saldo Projetado",     fmt_brl(saldo_proj), delta_color="inverse")
+    with p5:
+        st.plotly_chart(gauge_chart(custo_projetado, "R$/t PROJEÇÃO"),
+                        use_container_width=True)
+    st.divider()
 
-        # KPIs Projeção
-        st.subheader("🔮 Projeção da Safra")
-        p1, p2, p3, p4 = st.columns(4)
-        p1.metric("🌾 Ton. Projetadas",     f"{ton_proj:,.0f} t".replace(",", "."))
-        p2.metric("💰 Orçamento Projetado", fmt_brl(orc_proj))
-        p3.metric("🔧 Gasto Projetado",     fmt_brl(gasto_proj))
-        p4.metric("📈 Saldo Projetado",     fmt_brl(saldo_proj), delta_color="inverse")
-        st.divider()
-
-        # KPIs Meta
-        st.subheader("🎯 Meta da Safra")
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("🌾 Meta Toneladas",   f"{meta_ton:,.0f} t".replace(",", "."))
-        m2.metric("💰 Meta Orçamento",   fmt_brl(meta_orc))
-        m3.metric("🔧 Gasto Projetado",  fmt_brl(gasto_proj))
-        m4.metric("📊 Saldo vs Meta",    fmt_brl(saldo_meta),
-                  delta=f"{pct_meta:.1f}% da meta", delta_color="inverse")
-        st.divider()
-
-    with col_gauge:
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.plotly_chart(gauge_chart(custo_realizado, "REALIZADO"), use_container_width=True)
-        st.plotly_chart(gauge_chart(custo_projetado, "PROJEÇÃO"),  use_container_width=True)
-        st.plotly_chart(gauge_chart(custo_meta,      "META"),      use_container_width=True)
+    # ── Meta
+    st.subheader("🎯 Meta da Safra")
+    m1, m2, m3, m4, m5 = st.columns([1,1,1,1,1])
+    m1.metric("🌾 Meta Toneladas",  f"{meta_ton:,.0f} t".replace(",", "."))
+    m2.metric("💰 Meta Orçamento",  fmt_brl(meta_orc))
+    m3.metric("🔧 Gasto Projetado", fmt_brl(gasto_proj))
+    m4.metric("📊 Saldo vs Meta",   fmt_brl(saldo_meta),
+              delta=f"{pct_meta:.1f}% da meta", delta_color="inverse")
+    with m5:
+        st.plotly_chart(gauge_chart(custo_meta, "R$/t META"),
+                        use_container_width=True)
+    st.divider()
 
     # ── Gráficos
     col_esq, col_dir = st.columns(2)
