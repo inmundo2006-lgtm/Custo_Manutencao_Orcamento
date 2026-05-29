@@ -74,12 +74,13 @@ def semaforo(pct):
 def delta_pct(pct, sufixo):
     """
     Retorna string de delta com sinal correto para uso com delta_color='inverse'.
-    - Abaixo de 100% → valor positivo → delta_color='inverse' renderiza VERDE
-    - Acima de 100%  → valor negativo → delta_color='inverse' renderiza VERMELHO
+    delta_color='inverse': sinal + = VERMELHO, sinal - = VERDE
+    - Abaixo de 100% (bom) → passa negativo → renderiza VERDE
+    - Acima de 100%  (ruim) → passa positivo → renderiza VERMELHO
     """
     if pct > 100:
-        return f"-{pct:.1f}% {sufixo}"
-    return f"+{pct:.1f}% {sufixo}"
+        return f"+{pct:.1f}% {sufixo}"
+    return f"-{pct:.1f}% {sufixo}"
 
 def fracao_periodo(d_ini, d_fim):
     total_dias = (FIM_SAFRA - INI_SAFRA).days
