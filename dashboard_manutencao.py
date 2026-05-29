@@ -71,6 +71,16 @@ def semaforo(pct):
     if pct <= 100: return "🟡"
     return "🔴"
 
+def delta_pct(pct, sufixo):
+    """
+    Retorna string de delta com sinal correto para uso com delta_color='inverse'.
+    - Abaixo de 100% → valor positivo → delta_color='inverse' renderiza VERDE
+    - Acima de 100%  → valor negativo → delta_color='inverse' renderiza VERMELHO
+    """
+    if pct > 100:
+        return f"-{pct:.1f}% {sufixo}"
+    return f"+{pct:.1f}% {sufixo}"
+
 def fracao_periodo(d_ini, d_fim):
     total_dias = (FIM_SAFRA - INI_SAFRA).days
     dias_sel   = (d_fim - d_ini).days
@@ -428,7 +438,7 @@ if modulo == "colheita":
     k2.metric("💰 Orçamento Gerado",   fmt_brl(orc_atual))
     k3.metric("🔧 Gasto Manutenção",   fmt_brl(gasto_atual))
     k4.metric("📈 Saldo",              fmt_brl(saldo_atual),
-              delta=f"{pct_uso:.1f}% utilizado", delta_color="inverse")
+              delta=delta_pct(pct_uso, "utilizado"), delta_color="inverse")
     with k5:
         st.plotly_chart(gauge_chart(custo_realizado, "R$/t REALIZADO"),
                         use_container_width=True)
@@ -453,7 +463,7 @@ if modulo == "colheita":
     m2.metric("💰 Meta Orçamento",  fmt_brl(meta_orc))
     m3.metric("🔧 Gasto Projetado", fmt_brl(gasto_proj))
     m4.metric("📊 Saldo vs Meta",   fmt_brl(saldo_meta),
-              delta=f"{pct_meta:.1f}% da meta", delta_color="inverse")
+              delta=delta_pct(pct_meta, "da meta"), delta_color="inverse")
     with m5:
         st.plotly_chart(gauge_chart(custo_meta, "R$/t META"),
                         use_container_width=True)
@@ -595,7 +605,7 @@ elif modulo == "agro":
     k2.metric("💰 Orçamento Período", fmt_brl(orc_periodo))
     k3.metric("🔧 Gasto Manutenção",  fmt_brl(gasto_atual))
     k4.metric("📈 Saldo Período",     fmt_brl(saldo_atual),
-              delta=f"{pct_uso:.1f}% utilizado", delta_color="inverse")
+              delta=delta_pct(pct_uso, "utilizado"), delta_color="inverse")
     st.divider()
 
     # ── KPIs Projeção
@@ -604,7 +614,7 @@ elif modulo == "agro":
     p1.metric("💰 Orçamento Safra",   fmt_brl(orc_safra))
     p2.metric("🔧 Gasto Projetado",   fmt_brl(gasto_proj))
     p3.metric("📈 Saldo Projetado",   fmt_brl(saldo_proj),
-              delta=f"{pct_proj:.1f}% da safra", delta_color="inverse")
+              delta=delta_pct(pct_proj, "da safra"), delta_color="inverse")
     p4.metric("📅 Dias Restantes",    f"{dias_restantes} dias")
     st.divider()
 
