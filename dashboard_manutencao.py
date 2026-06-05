@@ -499,14 +499,17 @@ if modulo == "colheita":
         gasto_m = df_m_f.groupby(df_m_f["Data"].dt.to_period("M"))["Valor"].sum().cumsum()
         idx     = orc_m.index.union(gasto_m.index).sort_values()
 
+        # ✅ CORREÇÃO: usar strftime para string legível em vez de str(Period)
+        x_labels = [i.strftime("%b/%Y") for i in idx]
+
         fig2 = go.Figure()
         fig2.add_trace(go.Scatter(
-            x=[str(i) for i in idx], y=orc_m.reindex(idx).ffill().fillna(0).values,
+            x=x_labels, y=orc_m.reindex(idx).ffill().fillna(0).values,
             name="Orçamento Acum.", line=dict(color="#2ecc71", width=2),
             fill="tozeroy", fillcolor="rgba(46,204,113,0.1)"
         ))
         fig2.add_trace(go.Scatter(
-            x=[str(i) for i in idx], y=gasto_m.reindex(idx).ffill().fillna(0).values,
+            x=x_labels, y=gasto_m.reindex(idx).ffill().fillna(0).values,
             name="Gasto Acum.", line=dict(color="#e74c3c", width=2)
         ))
         fig2.update_layout(height=250,
@@ -647,9 +650,12 @@ elif modulo == "agro":
         st.subheader("Evolução Acumulada")
         gasto_m = df_m_f.groupby(df_m_f["Data"].dt.to_period("M"))["Valor"].sum().cumsum()
 
+        # ✅ CORREÇÃO: usar strftime para string legível em vez de str(Period)
+        x_labels = [i.strftime("%b/%Y") for i in gasto_m.index]
+
         fig2 = go.Figure()
         fig2.add_trace(go.Scatter(
-            x=[str(i) for i in gasto_m.index], y=gasto_m.values,
+            x=x_labels, y=gasto_m.values,
             name="Gasto Acum.", line=dict(color="#e74c3c", width=2),
             fill="tozeroy", fillcolor="rgba(231,76,60,0.1)"
         ))
