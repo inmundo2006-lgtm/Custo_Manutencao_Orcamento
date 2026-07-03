@@ -26,16 +26,16 @@ FIM_SAFRA   = date(2027, 3, 31)
 INI_SAFRA   = date(2026, 3, 1)
 FIM_COLHEITA = date(2026, 11, 30)
 
-CCS_COLHEITA = ["003", "005", "029", "041", "044", "050", "051"]
+CCS_COLHEITA = ["003", "005", "019", "029", "041", "044", "051"]
 CCS_AGRO     = ["028", "037", "038", "046", "047", "049", "052", "054", "056"]
 
 DESC_CC = {
     "003": "003 - VALE DO IVAI",
     "005": "005 - NOVA PRODUTIVA",
+    "019": "019 - ATVOS",
     "029": "029 - RIO AMAMBAI",
     "041": "041 - COCAL",
     "044": "044 - SOL NASCENTE",
-    "050": "050 - LOBO GUARA",
     "051": "051 - COGO",
     "028": "028 - AGRO VALE DO IVAI",
     "037": "037 - AGRO NAVIRAI",
